@@ -1,2 +1,2 @@
-a b c d
-a*b
+i f e l s w h
+IF a
