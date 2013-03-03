@@ -54,6 +54,8 @@ NFAStateSet operationSTAR ( NFAStateSet a );
 string infixToPostfix( string expression );
 NFAStateSet generateOpStack ( string postfix, string fileName );
 NFAStateSet sortStatesForDFA ( NFAStateSet unsortedStates );
+int getFinalState ( NFAStateSet states );
+
 /*
  * Reads the first line of file which is space separated and contains
  * all the alphabets of the language
@@ -105,11 +107,26 @@ NFAStateSet allTermStates ( string fileName )
 	fpCal.close();
 	return singletonStates;
 }
+bool compare (vector <int> i,vector <int> j){ return (i[1]<j[1]); }
 NFAStateSet sortStatesForDFA ( NFAStateSet unsortedStates )
 {
-	NFAStateSet sorted;
 	sort (unsortedStates.begin(), unsortedStates.end(), compare);
-	return sorted;
+	int startState = unsortedStates[0][1];
+	vector < int > temp;
+	temp.push_back(operators[EPSILON]);
+	temp.push_back(0);
+	temp.push_back(startState);
+	unsortedStates.insert( unsortedStates.begin(), temp );
+	
+	return unsortedStates;
+}
+int getFinalState ( NFAStateSet states )
+{
+	int finalState;
+	for ( unsigned int i=0; i<states.size(); i++)
+		if ( states[i][0] == -1 )
+			finalState = states[i][2];
+	return finalState;
 }
 bool fileReadWrite ( string inFile, string outFile )
 {
@@ -138,21 +155,19 @@ bool fileReadWrite ( string inFile, string outFile )
 		NFAStateSet unsorted, sorted;
 		unsorted = generateOpStack ( infixToPostfix(tokenRegEx[1]), inFile );
 		sorted = sortStatesForDFA ( unsorted );
-		/*
-		for ( unsigned int i=0; i<setOfStates.size(); i++ ){
-			for ( unsigned int j=0; j<setOfStates[j].size(); j++){
-				if ( j==0 && setOfStates[i][j] != -1)
-					cout<<(char)setOfStates[i][j]<<"\t";
-				if ( j==0 && setOfStates[i][j] == -1)
-					cout<<setOfStates[i][j]<<"\t";
-				if ( j!=0)
-					cout<<setOfStates[i][j]<<"\t";
-			}
-			cout<<"\n";
+		fpOut<<getFinalState(sorted)<<"\n";
+	
+		for ( unsigned int i=0; i < sorted.size() && sorted[i][0] != -1; i++ ){
+			fpOut<<sorted[i][1]<<":";
+			unsigned int j;
+			for ( j=i; j<sorted.size() && sorted[i][1] == sorted[j][1] && sorted[j][0] != -1; j++ )
+				fpOut<<"<'"<<(char)sorted[j][0]<<"',"<<sorted[j][2]<<">";
+			i=j-1;	
+			fpOut<<"\n";
 		}
-		*/
 	}
 	fpCal.close();
+	fpOut.close();
 	return (0);
 }
 NFAStateSet operationOR ( NFAStateSet a, NFAStateSet b )

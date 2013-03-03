@@ -1,2 +1,4 @@
 i f e l s w h
-IF a
+IF i@f@s
+ELSE e@l@s@e
+RAND ((i|f)*)@(s|w|h*)*
