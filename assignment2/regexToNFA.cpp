@@ -55,6 +55,7 @@ string infixToPostfix( string expression );
 NFAStateSet generateOpStack ( string postfix, string fileName );
 NFAStateSet sortStatesForDFA ( NFAStateSet unsortedStates );
 int getFinalState ( NFAStateSet states );
+NFAStateSet combineAllNFA ( vector < NFAStateSet> allRegexNFA );
 
 /*
  * Reads the first line of file which is space separated and contains
@@ -128,6 +129,30 @@ int getFinalState ( NFAStateSet states )
 			finalState = states[i][2];
 	return finalState;
 }
+NFAStateSet combineAllNFA ( vector < NFAStateSet> allRegexNFA )
+{
+	NFAStateSet combined;
+	for ( unsigned int i=0; i<allRegexNFA.size(); i++){
+		for ( unsigned int j=0; j<allRegexNFA[i].size(); j++){
+			if ( allRegexNFA[i][j][0] != -1 )
+				combined.push_back(allRegexNFA[i][j]);
+			if ( allRegexNFA[i][j][0] == -1 ){
+				vector <int> temp;
+				temp.push_back( (int)operators[EPSILON] );
+				temp.push_back( 0 );
+				temp.push_back( allRegexNFA[i][j][1] );
+				combined.push_back ( temp );
+
+				vector <int> startEndInfo;
+				startEndInfo.push_back( -1 );
+				startEndInfo.push_back( 0 );
+				startEndInfo.push_back( allRegexNFA[i][j][2] );
+				combined.push_back ( startEndInfo );
+			}
+		}
+	}
+	return combined;
+}
 bool fileReadWrite ( string inFile, string outFile )
 {
 	ifstream fpCal;
@@ -140,10 +165,11 @@ bool fileReadWrite ( string inFile, string outFile )
 	}
 	string discardAlphabetString;	
 	getline (fpCal,discardAlphabetString );	
+	vector < NFAStateSet > allRegexNFA;
+	vector <string> tokenClassName;
 	
 	string infixExp;
 	while (	getline ( fpCal,infixExp ) ){
-		fpOut<<"####################################################\n";
 		stringstream ss(infixExp);
 		vector <string> tokenRegEx;
 		while (ss){
@@ -151,21 +177,34 @@ bool fileReadWrite ( string inFile, string outFile )
 			ss >> sub;
 			tokenRegEx.push_back( sub );
 		}
-		fpOut<<tokenRegEx[0]<<"\n";
-		NFAStateSet unsorted, sorted;
-		unsorted = generateOpStack ( infixToPostfix(tokenRegEx[1]), inFile );
-		sorted = sortStatesForDFA ( unsorted );
-		fpOut<<getFinalState(sorted)<<"\n";
-	
-		for ( unsigned int i=0; i < sorted.size() && sorted[i][0] != -1; i++ ){
-			fpOut<<sorted[i][1]<<":";
-			unsigned int j;
-			for ( j=i; j<sorted.size() && sorted[i][1] == sorted[j][1] && sorted[j][0] != -1; j++ )
-				fpOut<<"<'"<<(char)sorted[j][0]<<"',"<<sorted[j][2]<<">";
-			i=j-1;	
-			fpOut<<"\n";
-		}
+		tokenClassName.push_back( tokenRegEx[0] );
+		allRegexNFA.push_back( generateOpStack ( infixToPostfix(tokenRegEx[1]), inFile ) );
 	}
+	/*
+	 * Now allRegexNFA contains all NFAs for each expression as a vector
+	 * of vectors. Now call function to join these together, single start
+	 * state goes to each start state of these NFAs, and then each end
+	 * is stored separately with TOKEN_IDs (contained in tokenClassName)
+	 */
+	NFAStateSet resultCombined = combineAllNFA ( allRegexNFA );
+	
+	int tokenPtr = 0;
+	for ( unsigned int i=0; i < resultCombined.size(); i++ )
+		if ( resultCombined[i][0] == -1 )
+			fpOut<<tokenClassName[tokenPtr++]<<" "<<resultCombined[i][2]<<",";
+	fpOut<<"\n";
+	fpOut<<uniqueStateID<<"\n";
+	for ( unsigned int i=0; i < resultCombined.size(); i++ ){
+		bool endReached = false;
+		for ( unsigned int j=0; j<resultCombined[i].size(); j++ )
+			if ( resultCombined[i][0] != -1 ){
+				fpOut<<resultCombined[i][j]<<"\t";
+				endReached = true;
+			}
+		if ( endReached )
+			fpOut<<"\n";
+	}
+
 	fpCal.close();
 	fpOut.close();
 	return (0);
@@ -385,7 +424,7 @@ NFAStateSet generateOpStack ( string postfix, string fileName )
 {
 	stack < NFAStateSet > stateStack;
 	NFAStateSet inputState = allTermStates( fileName );
-
+	bool isSingleton = true;
 	for ( unsigned int i=0; i<postfix.length(); i++ ){
 		if ( isOperator( postfix[i] ) == -1 ){
 			//use the nfa for this state
@@ -416,6 +455,7 @@ NFAStateSet generateOpStack ( string postfix, string fileName )
 			stateStack.pop();
 			output = operationOR ( operand1, operand2 );
 			stateStack.push(output);
+			isSingleton = false;
 		}
 		if ( isOperator ( postfix[i] ) == CONCAT ){
 			//send the two preceding states to the function to CONCAT
@@ -426,6 +466,7 @@ NFAStateSet generateOpStack ( string postfix, string fileName )
 			stateStack.pop();
 			output = operationCONCAT ( operand1, operand2 );
 			stateStack.push(output);
+			isSingleton = false;
 		}
 		if ( isOperator ( postfix[i] ) == STAR ){
 			//send the preceding state to the function to STAR
@@ -434,17 +475,41 @@ NFAStateSet generateOpStack ( string postfix, string fileName )
 			stateStack.pop();
 			output = operationSTAR ( operand );
 			stateStack.push(output);
+			isSingleton = false;
 		}
 	}
-	NFAStateSet finalStateSet = stateStack.top();
-	if (!stateStack.empty())
-		stateStack.pop();
-	if (stateStack.empty())
-		return finalStateSet;
-	else{
-		cout<<"ERROR: Stack didn't empty itself\n";
-		exit(1);
+	if (!isSingleton){
+		NFAStateSet finalStateSet = stateStack.top();
+		if (!stateStack.empty())
+			stateStack.pop();
+		if (stateStack.empty())
+			return finalStateSet;
+		else{
+			cout<<"ERROR: Stack didn't empty itself\n";
+			exit(1);
+		}
 	}
+	
+	else if ( isSingleton ){
+		NFAStateSet finalStateSet = stateStack.top();
+		vector <int> startEndInfo;
+		startEndInfo.push_back(-1);
+		startEndInfo.push_back(finalStateSet[0][1]);
+		startEndInfo.push_back(finalStateSet[0][2]);
+		finalStateSet.push_back( startEndInfo );
+	
+		if (!stateStack.empty())
+			stateStack.pop();
+		if ( stateStack.empty() )
+			return finalStateSet;
+		else{
+			cout<<"ERROR: Stack didn't empty itself\n";
+			exit(1);
+		}
+	}
+	NFAStateSet dummyReturnVal;
+	return (dummyReturnVal);
+
 }
 int main(int argc, char *argv[])
 {	
