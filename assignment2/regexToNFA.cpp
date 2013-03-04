@@ -56,7 +56,8 @@ NFAStateSet generateOpStack ( string postfix, string fileName );
 NFAStateSet sortStatesForDFA ( NFAStateSet unsortedStates );
 int getFinalState ( NFAStateSet states );
 NFAStateSet combineAllNFA ( vector < NFAStateSet> allRegexNFA );
-
+bool compare (vector <int> i,vector <int> j);
+string implicitConcat ( string token );
 /*
  * Reads the first line of file which is space separated and contains
  * all the alphabets of the language
@@ -68,6 +69,28 @@ int isOperator (char c)
 		if ( c == operators[t] )
 			return t;     
 	return -1;
+}
+string implicitConcat ( string token )
+{
+	bool flag1 = false;
+	bool flag2 = false;
+	string finalString = "";
+	
+	for ( unsigned int i=0; i<token.length()-1; i++ ){
+		if ( token[i] == operators[OR] || token[i] == operators[CONCAT] || token[i] == operators[LB] )
+			flag1 = true;
+		if ( token[i+1] == operators[OR] || token[i+1] == operators[CONCAT] || token[i+1] == operators[RB] || token[i+1] == operators[STAR])
+			flag2 = true;
+		
+		if ( !flag1 && !flag2 )
+			finalString = finalString + token[i] + operators[CONCAT];
+		else
+			finalString = finalString + token[i];
+		flag1 = false;
+		flag2 = false;
+	}
+	finalString = finalString + token[token.length()-1];
+	return finalString;
 }
 NFAStateSet allTermStates ( string fileName )
 {
@@ -108,7 +131,10 @@ NFAStateSet allTermStates ( string fileName )
 	fpCal.close();
 	return singletonStates;
 }
-bool compare (vector <int> i,vector <int> j){ return (i[1]<j[1]); }
+bool compare (vector <int> i,vector <int> j)
+{
+	return (i[1]<j[1]);
+}
 NFAStateSet sortStatesForDFA ( NFAStateSet unsortedStates )
 {
 	sort (unsortedStates.begin(), unsortedStates.end(), compare);
@@ -178,7 +204,7 @@ bool fileReadWrite ( string inFile, string outFile )
 			tokenRegEx.push_back( sub );
 		}
 		tokenClassName.push_back( tokenRegEx[0] );
-		allRegexNFA.push_back( generateOpStack ( infixToPostfix(tokenRegEx[1]), inFile ) );
+		allRegexNFA.push_back( generateOpStack ( infixToPostfix( tokenRegEx[1] ), inFile ) );
 	}
 	/*
 	 * Now allRegexNFA contains all NFAs for each expression as a vector

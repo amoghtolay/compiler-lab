@@ -1,0 +1,3 @@
+a b c d
+TEST1 (a|b|c*)@(c*|d*)
+TEST2 ab
