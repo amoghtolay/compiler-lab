@@ -38,7 +38,9 @@ enum operation
 	LB,
 	RB
 };
-char operators[] = { '*', '@', '|', '$', '(', ')' };
+char operators[] = { (char)17, (char)18, (char)19, (char)20, (char)21, (char)22 };
+char oldOperators[] = { '*', '@', '|', '$', '(', ')' };
+
 /*
  * Remove this global declaration later
  */
@@ -58,10 +60,8 @@ int getFinalState ( NFAStateSet states );
 NFAStateSet combineAllNFA ( vector < NFAStateSet> allRegexNFA );
 bool compare (vector <int> i,vector <int> j);
 string implicitConcat ( string token );
-/*
- * Reads the first line of file which is space separated and contains
- * all the alphabets of the language
- */
+string convertStringToEscapedString ( string raw );
+
 int isOperator (char c)
 {
 	int t;                                                     
@@ -91,6 +91,29 @@ string implicitConcat ( string token )
 	}
 	finalString = finalString + token[token.length()-1];
 	return finalString;
+}
+string convertStringToEscapedString ( string raw )
+{
+	string newString = "";
+
+	for ( unsigned int i = 0; i<raw.length(); i++ ){
+		bool flag = false;
+		for ( int j=STAR; j<=RB; j++ ){
+			if ( raw[i] == '\\' && (i+1)<raw.length() ){
+				newString = newString + raw[i+1];
+				i++;
+				flag = true;
+				break;
+			}
+			if ( raw[i] == oldOperators[j] ){
+				flag = true;
+				newString = newString + operators[j];
+			}
+		}
+		if ( !flag )
+			newString = newString + raw[i];
+	}
+	return newString;
 }
 NFAStateSet allTermStates ( string fileName )
 {
@@ -204,7 +227,8 @@ bool fileReadWrite ( string inFile, string outFile )
 			tokenRegEx.push_back( sub );
 		}
 		tokenClassName.push_back( tokenRegEx[0] );
-		allRegexNFA.push_back( generateOpStack ( infixToPostfix( tokenRegEx[1] ), inFile ) );
+		string escapedSeq = convertStringToEscapedString ( tokenRegEx[1] );
+		allRegexNFA.push_back( generateOpStack ( infixToPostfix( implicitConcat ( escapedSeq ) ), inFile ) );
 	}
 	/*
 	 * Now allRegexNFA contains all NFAs for each expression as a vector
@@ -417,10 +441,10 @@ string infixToPostfix( string expression )
 	 * Converts given infix expression to postfix expression keeping
 	 * in mind the appropriate precedence rules
 	 */
-	expression = expression + ")";
+	expression = expression + operators[RB];
 	stack<char> stringStack;
 	string postfix = "";
-	char dummy = '(';
+	char dummy = operators[LB];
     stringStack.push(dummy);
     
     for ( unsigned int i=0; i < expression.length(); i++ ){
@@ -511,7 +535,7 @@ NFAStateSet generateOpStack ( string postfix, string fileName )
 		if (stateStack.empty())
 			return finalStateSet;
 		else{
-			cout<<"ERROR: Stack didn't empty itself\n";
+			cout<<"ERROR: NFA stack didn't empty itself\n";
 			exit(1);
 		}
 	}
@@ -552,12 +576,6 @@ int main(int argc, char *argv[])
 	stringstream convert2;
 	convert2 << argv[2];
 	outFile = convert2.str();
-	/*
-	 * This vector inputState contains all states of input in the
-	 * format as shown:
-	 * ascii_val(input), currentStateNum, transitionToStateNum
-	 */
-	
 	if ( fileReadWrite ( inFile, outFile ) ){
 		cout<<"ERROR: Could not write the output NFA file from the Regex";
 		exit(1);

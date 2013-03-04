@@ -24,7 +24,9 @@ enum operation
 	LB,
 	RB
 };
-char operators[] = { '*', '@', '|', '$', '(', ')' };
+char operators[] = { '+','@' ,'|' ,'$' ,'{' , '}' };
+char oldOperators[] = { '*', '@', '|', '$', '(', ')' };
+
 int isOperator (char s)
 {
 	int t;                                                     
@@ -55,13 +57,39 @@ string implicitConcat ( string token )
 	finalString = finalString + token[token.length()-1];
 	return finalString;
 }
+string convertStringToEscapedString ( string raw )
+{
+	string newString = "";
+
+	for ( unsigned int i = 0; i<raw.length(); i++ ){
+		bool flag = false;
+		for ( int j=STAR; j<=RB; j++ ){
+			if ( raw[i] == '\\' && (i+1)<raw.length() ){
+				newString = newString + raw[i+1];
+				i++;
+				flag = true;
+				break;
+			}
+			if ( raw[i] == oldOperators[j] ){
+				flag = true;
+				newString = newString + operators[j];
+			}
+		}
+		if ( !flag )
+			newString = newString + raw[i];
+	}
+	return newString;
+}
+
 int main()
 {
 	string a;
-	cout<<"Enter nonConcat exp:\n";
-	cin>>a;	
-	string b = implicitConcat ( a );
-	cout<<"\n"<<b<<"\n";
+	cout<<"Give expression:\n";
+	cin>>a;
+	string b = convertStringToEscapedString ( a );
+	cout<<b<<"\n";
+	//string b = implicitConcat ( a );
+	//cout<<b<<"\n";
 	return 0;
 }
 
