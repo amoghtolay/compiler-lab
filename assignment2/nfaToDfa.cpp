@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
 	buildNfa(&acceptingStates,&nfa, fileName);
 	getEpsClosure(nfa, &epsClosureContainer);
 	set<int>::iterator dfaStateSetIt;
-	while(buildDfa(&nfa,&epsClosureContainer,&dfaProdRules,&dfaStateSets)!=0);
+	while( buildDfa(&nfa,&epsClosureContainer,&dfaProdRules,&dfaStateSets)!=0 );
 	
 	vector<pair<string,vector <int> > > dfaAcceptingStates;
 	getFinalStates(&acceptingStates,&dfaStateSets,&dfaAcceptingStates);
@@ -260,7 +260,6 @@ void generateOutputFileNonMinimal(vector<vector<int> > *dfaProdRules, vector<pai
 	unsigned int i,j;
 	fp.open (fileName.c_str(), ios::out); 
 	//outputting first line:final states
-	fp<<"!";
 	for(i=0;i<(*dfaAcceptingStates).size();i++){
 		for(j=0;j<(*dfaAcceptingStates)[i].second.size();j++){
 			fp<<'<'<<(*dfaAcceptingStates)[i].second[j]<<','<<(*dfaAcceptingStates)[i].first<<'>';

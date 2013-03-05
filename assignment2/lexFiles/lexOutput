@@ -1,0 +1,5 @@
+<INT><ID,0> 
+<CHAR> <MINUS> <PLUS> <DEC> <INC> 
+<ID,1> <ID,2> <ID,3> <ID,4> <ID,5> 
+<CONSTANT,6> <ASSIGN> <CONSTANT,7> 
+<COMMENT> 
