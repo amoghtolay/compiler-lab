@@ -240,10 +240,10 @@ void generateOutputFileMinimal(vector<vector<int> > *dfaProdRules, vector<pair<s
 	for(i=0;i<(*dfaAcceptingStates).size();i++){
 		fp<<"!<";
 		fp<<(*dfaAcceptingStates)[i].first;
-		fp<<',';
 		for(j=0;j<(*dfaAcceptingStates)[i].second.size();j++){
-			fp<<(*dfaAcceptingStates)[i].second[j];
 			fp<<',';
+			fp<<(*dfaAcceptingStates)[i].second[j];
+			//fp<<',';
 		}
 		fp<<'>';
 	}

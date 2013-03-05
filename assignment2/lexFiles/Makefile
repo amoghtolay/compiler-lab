@@ -1,4 +1,5 @@
 all: flexCode.o
-	gcc -o flexRun flexCode.o -ll
+	gcc -Wall -o flexRun flexCode.o -ll
+
 clean:
-	rm -f regexToNFA nfaToDfa
+	rm -f flexCode.c flexCode.o flexRun symTab lexOutput 

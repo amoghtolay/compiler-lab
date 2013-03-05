@@ -1,0 +1,11 @@
+< INT > < ID, 1 > < LPAREN > < RPAREN > 
+< LBRACE > 
+< INT > < ID, 2 > < ASSIGN > < CONSTANT, 3 > < SEMI > 
+< INT > < ID, 4 > < ASSIGN > < CONSTANT, 5 > < SEMI > 
+< CHAR > < ID, 6 > < SEMI > 
+< ID, 6 > < ASSIGN > < LPAREN > < CHAR > < RPAREN > < ID, 2 > < SEMI > 
+< ID, 2 > < ASSIGN > < ID, 4 > < PLUS > < CONSTANT, 7 > < SEMI > 
+< WHILE > < LPAREN > < ID, 2 > < RPAREN > 
+< CONT > < SEMI > 
+< BREAK > < SEMI > 
+< RBRACE > 
