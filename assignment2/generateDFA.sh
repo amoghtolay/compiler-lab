@@ -2,6 +2,5 @@
 make
 ./regexToNFA regexSpec.txt NFAout.txt
 ./nfaToDfa NFAout.txt DFAout.txt
-#./minDFA DFAout.txt MinDfa.txt
-./lex DFAout.txt sampleInput tokenized
-
+./minDFA DFAout.txt MinDfa.txt
+./lex MinDfa.txt sampleInput tokenized

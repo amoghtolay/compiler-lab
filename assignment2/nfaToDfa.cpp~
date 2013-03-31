@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
 	
 	vector<pair<string,vector <int> > > dfaAcceptingStates;
 	getFinalStates(&acceptingStates,&dfaStateSets,&dfaAcceptingStates);
-	generateOutputFileMinimal(&dfaProdRules,&dfaAcceptingStates,outputFile);
+	generateOutputFileNonMinimal(&dfaProdRules,&dfaAcceptingStates,outputFile);
 	generateTransitionTable(&dfaProdRules);
 }
 void buildNfa(vector<pair<string,int> > *acceptingStates,vector<vector<int> > *nfa,char* fileName){

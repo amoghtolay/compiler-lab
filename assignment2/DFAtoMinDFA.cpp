@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#define LINESIZE 10000
 
 using namespace std;
 
@@ -86,11 +87,12 @@ int main(int argc, char **argv)
 	{
 		strcpy (DFAinput, argv[1] );
 	}
-	
+	//cout<<"filename:"<<DFAinput<<endl;
 	// Reconstruct DFA
 	// DFA should not modified later
 	constructDfa ( DFAinput, &dfa , &validTokenType, &final, &nonfinal , &alphabets, &tokenStateSets );
 	/* Now Do DFA Minimization */
+	//cout<<"DFA Constructed";
 	int numStates = dfa[0].size();	//number of states in the dfa
 	//cout<<numStates<<"\n";
 	// Declare 'Distinct' vector
@@ -195,7 +197,7 @@ int main(int argc, char **argv)
 		{
 			int nextState = (*prodRuleIt).second;
 			char curInputSymbol  = (*prodRuleIt).first;
-			cout<<(*prodRuleIt).first<<" : "<<nextState<<"\t" ;
+			//cout<<(*prodRuleIt).first<<" : "<<nextState<<"\t" ;
 			
 			int newNextState = -1;
 			for (vector <set<int > >::iterator uniqueStateSetIt = (uniqueStates).begin(); uniqueStateSetIt != (uniqueStates).end(); uniqueStateSetIt++ )
@@ -215,17 +217,17 @@ int main(int argc, char **argv)
 			}
 			
 		}
-		cout<<endl;
+		//cout<<endl;
 	}
 	
 	//cout<<"original dfa\n";
-	printdfa(&dfa);
-	cout<<endl;
+	//printdfa(&dfa);
+	//cout<<endl;
 	// printing minimal dfa
 	//cout<<"minimal dfa\n";
-	printdfa(&mindfa);
+	//printdfa(&mindfa);
 	//cout<<endl;
-	cout<<"all final states:\n";
+	//cout<<"all final states:\n";
 	
 	//writing in output file
 	char mindfafile[1024];
@@ -278,14 +280,15 @@ void constructDfa ( char DFAinput[1024], vector < vector < map < char, int  > > 
 	int DFAno = -1;	
 	if ( dfainput.is_open() )
 	{
+		//cout<<"FIle opened: "<<DFAinput;
 		char curState[1024];
-		char line[1024];
+		char line[LINESIZE];
 		int MaxState;
-		while ( dfainput.getline ( line, 1024 ) )
+		while ( dfainput.getline ( line, LINESIZE ) )
 		{
 			//if ( !line )
 			//	continue;
-			//cout<<"LINE:"<<line<<"\n";
+			//cout<<"LINE:)))))"<<line<<"\n";
 			if ( line[0] == '!' )
 			{
 				DFAno++;
@@ -309,18 +312,18 @@ void constructDfa ( char DFAinput[1024], vector < vector < map < char, int  > > 
 						if ( pch == NULL )
 							break;
 						strcpy (tokenType, pch);
-						printf ( "\n%s\t", tokenType );	//accepting token type
+						//printf ( "\n%s\t", tokenType );	//accepting token type
 						pch = strtok ( NULL, "<,>" );
 					}
 					strcpy (state, pch);
-					printf ( "%s\t", state );	//state
+					//printf ( "%s\t", state );	//state
 					(*final).insert(atoi(state));
 					acceptStateSets.insert(atoi(state));
 					(*validTokenType)[DFAno][atoi(state)] = tokenType;	//add to acceptClassType
 					pch = strtok ( NULL, "<,>" );
 					//cout<<"PCH"<<pch[0]<<"\n";
 				}
-				cout<<"\nTransition functions:\n";
+				//cout<<"\nTransition functions:\n";
 			}
 			else
 			{

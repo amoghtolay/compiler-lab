@@ -2,30 +2,32 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include <string.h>
-	int symTabCount = 0, lineCount = 0;
+	
+	int symTabCount = 0, lineCount = 1;
 	char tokenName[1000000] = "";
 	char symTabContents[100000] ="";
-	int lookupEntrySymTab ( char symTabContents[1000000], char symbol[255] )
-	{
-		int symTabIndex;
-		int matchIndex = -1;		
-		char *pch = strtok ( symTabContents, "\t\n" );
-		while ( pch != NULL ){
-			symTabIndex = (int)(*pch);
-			pch = strtok ( NULL, "\t\n" );
-			char token[256];
-			strcpy ( token, pch );
-			if ( strcmp ( token, symbol ) == 0 ){
-				matchIndex = symTabIndex;
-				printf("found%d\n",symTabIndex);
-				break;
-			}
-			pch = strtok ( NULL, "\t\n" );
+	
+	int lookupEntrySymTab ( char* symTabContents, char symbol[256] ){	
+		int matchIndex = -1;
+		char *pch = strstr ( symTabContents, symbol );
+		if(pch){
+			if(pch-symTabContents ==0)
+				pch = strstr ( pch, symbol );
+			while(*(pch-1)!='\t'){	
+				pch = strstr ( pch+1, symbol );
+				if(!pch)
+					break;
+			}				
 		}
-		printf("retval%d",matchIndex);
+		if ( pch != NULL ){
+				//printf("found%d\n",matchIndex);
+				pch-=2;
+				while(isdigit(*pch)){
+					pch--;
+				}
+				matchIndex = atoi(pch);
+			}
 		return matchIndex;
-		
-		
 	}
 %}
 DIGIT [0-9]
@@ -56,8 +58,9 @@ float 		{strcat(tokenName,"<FLOAT> ");}
 				// Check if already in symTab
 				int lookupVal = lookupEntrySymTab ( symTabContents, yytext );
 				if ( lookupVal == -1 ){
-					sprintf(symTabContents,"%s%d\t%s\n",symTabContents,symTabCount++, yytext);
+					sprintf(symTabContents,"%s%d\t%s\n",symTabContents,symTabCount, yytext);
 					sprintf(tokenName,"%s<CONSTANT,%d> ",tokenName,symTabCount);
+					symTabCount++;
 				}
 				else
 					sprintf(tokenName,"%s<CONSTANT,%d> ",tokenName,lookupVal);
@@ -65,17 +68,26 @@ float 		{strcat(tokenName,"<FLOAT> ");}
 [+][+]		{strcat(tokenName,"<INC> ");}
 [-][-]		{strcat(tokenName,"<DEC> ");}
 {ID} 		{
+				
 				int lookupVal = lookupEntrySymTab ( symTabContents, yytext );
 				if ( lookupVal == -1 ){
-					sprintf(symTabContents,"%s%d\t%s\n",symTabContents,symTabCount++, yytext);
+					sprintf(symTabContents,"%s%d\t%s\n",symTabContents,symTabCount, yytext);
 					sprintf(tokenName,"%s<ID,%d> ",tokenName,symTabCount);
+					symTabCount++;
 				}
 				else
 					sprintf(tokenName,"%s<ID,%d> ",tokenName,lookupVal);
 			}
 [/][/]({DIGIT}|{LETTER})* {strcat(tokenName,"<COMMENT> ");}
-\n			{strcat(tokenName, "\n");}
-
+\n			{
+				strcat(tokenName, "\n");
+				lineCount++;
+			}
+[ ]			{};
+\t			{};
+.			{
+				printf("Error on line number: %d", lineCount );
+			};
 
 %%
 // Code section
