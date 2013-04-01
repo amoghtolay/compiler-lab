@@ -19,20 +19,19 @@
 #include <sstream>
 
 using namespace std;
-#define EPSILON epsilon;
-#define END_OF_STRING $;
+#define EPSILON "epsilon"
+#define END_OF_STRING "$"
 /*
  * Prototype declarations
  */
 
 map < string,list < string > > getFirstSet ( char* firstFileName );
 map < string, list < string > > getFollowSet ( char* followFileName );
-void printTableToFile ( vector< vector<string> > table, char* outputFileName );
+void printTableToFile ( map < string, map < string, string > > table, char* outputFileName );
 bool isInSet ( string tokenName, string setToken, map < string, list <string> > setName );
-map < string, map <string, string> > constructTable ( char* prodRuleFileName );
+map < string, map <string, string> > constructTable ( char* prodRuleFileName, map < string, list < string > > firstSet, map < string, list < string > > followSet );
 list < string > getTermList ( char* prodRuleFileName );
 list < string > getNonTermList ( char* prodRuleFileName );
-vector < string > rhsTerms ( string productionRule );
 /*
  * Function to read first set from the file and store in RAM
  */
@@ -46,9 +45,6 @@ map < string,list < string > > getFirstSet ( char* firstFileName ){
 		
 	map < string, list < string > > firstSet;
 	string line;
-	// Skipping two lines for terms and nonterms
-	getline ( fpFirst, line );
-	getline ( fpFirst, line );
 	while ( getline ( fpFirst, line ) ){
 		istringstream iss( line );
 		string firstWord;
@@ -75,9 +71,6 @@ map < string,list < string > > getFollowSet ( char* followFileName ){
 
         map < string, list < string > > followSet;
         string line;
-        // Skipping two lines for terms and nonterms
-        getline ( fpFollow, line );
-        getline ( fpFollow, line );
         while ( getline ( fpFollow, line ) ){
                 istringstream iss( line );
                 string firstWord;
@@ -119,6 +112,7 @@ list < string > getNonTermList ( char* prodRuleFileName ){
 		iss >> nonTerm;
 		nonTermList.push_back ( nonTerm );
 	}
+	nonTermList.pop_back();
 	return nonTermList;
 }
 
@@ -138,13 +132,22 @@ list < string > getTermList ( char* prodRuleFileName ){
 		iss >> term;
 		termList.push_back ( term );
 	}
+	termList.pop_back();
 	return termList;
 }
-map < string, map < string,string > > constructTable ( char* prodRuleFileName ){
+map < string, map < string,string > > constructTable ( char* prodRuleFileName, map < string, list < string > > firstSet, map < string, list < string > > followSet  ){
 	map < string, map < string,string > > table;
+	// nonTerminals are in list, terminals are in list
 	list < string > termList = getTermList ( prodRuleFileName );
 	list < string > nonTermList = getNonTermList( prodRuleFileName );
-	// nonTerminals are in list, terminals are in list
+	
+	// Construct the table with blank entries
+	for ( list < string >::iterator itNonTerms= nonTermList.begin(); itNonTerms!= nonTermList.end(); ++itNonTerms ){
+		for ( list < string >::iterator itTerms = termList.begin(); itTerms != termList.end(); ++itTerms ){
+			table[*itNonTerms][*itTerms] = "";
+		}
+		table[*itNonTerms][ END_OF_STRING ] = "";
+	}
 	// Now read production rule A->alpha, and then for each alpha, check if in first or follow of RHS
 	ifstream fpProdRule;
 	fpProdRule.open( prodRuleFileName );
@@ -158,13 +161,14 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName ){
 	getline ( fpProdRule, prodRule );
 	// Now populating a list of LHS and RHS components for each rule
 	while( getline ( fpProdRule, prodRule ) ){
-		list < string > oneRuleTerms;
+		vector < string > oneRuleTerms;
 		unsigned pos = prodRule.find( "-->" );
+		string rhsString;
 		if( pos != string::npos ){
 			string lhs = prodRule.substr( 0,pos );
 			oneRuleTerms.push_back( lhs );
-			prodRule = prodRule.substr( pos+3 );
-			istringstream iss( prodRule );
+			rhsString = prodRule.substr( pos+3 );
+			istringstream iss( rhsString );
 			while( iss ){
 				string rhsTerm;
 				iss >> rhsTerm;
@@ -177,9 +181,80 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName ){
 			exit(1);
 		}
 		// Now for each rule, check the first and follow sets, and then appropriately add to the table
-
+		// Now for terminal in first ( firstRHS ), add entry to table
+		string lhsOfProdRule = oneRuleTerms[0];
+		bool isEpsilonExists = false;
+		int indexOneRuleTerms = 1;
+		do {
+			string lhs = oneRuleTerms[indexOneRuleTerms];
+			for ( list < string >::iterator itTerm = termList.begin(); itTerm != termList.end(); ++itTerm )
+				if ( isInSet ( *itTerm, lhs, firstSet ) ){
+					if ( table[lhsOfProdRule][*itTerm] != "" ){
+						perror("The grammar is NOT LL(1)\n");
+						exit(1);
+					}
+					else
+						table[lhsOfProdRule][*itTerm] = rhsString;
+				}
+			// If epsilon is in firstSet, then not only check the follow, but also check first and follow sets of
+			// subsequent non-terminals which might go to epsilon
+			if ( isInSet ( EPSILON, lhs, firstSet ) ){
+				isEpsilonExists = true;
+				indexOneRuleTerms++;
+				// checking follow sets here
+				if ( indexOneRuleTerms == (int)oneRuleTerms.size() ){
+					for ( list < string >::iterator itTerm = termList.begin(); itTerm != termList.end(); ++itTerm )
+						if ( isInSet ( *itTerm, lhsOfProdRule, followSet ) ){
+							if ( table[lhsOfProdRule][*itTerm] != "" ){
+								perror ( "The grammar is NOT LL(1)\n");
+								exit(1);
+							}
+							else
+								table[lhsOfProdRule][*itTerm] = rhsString;
+						}
+					// checking $ for follow set
+					if ( isInSet ( END_OF_STRING, lhsOfProdRule, followSet ) ){
+						if ( table[lhsOfProdRule][END_OF_STRING] != "" ){
+							perror ( "The grammar is NOT LL(1)\n" );
+							exit(1);
+						}
+						else
+							table[lhsOfProdRule][END_OF_STRING] = rhsString;
+					}
+				}
+			}
+			else
+				isEpsilonExists = false;
+		} while ( isEpsilonExists && indexOneRuleTerms < (int) oneRuleTerms.size() );
+		// check to see if whole RHS is nullable or not - NOT REQUIRED
+		/*
+		if ( indexOneRuleTerms == (int) oneRuleTerms.size() ){
+			if ( table[lhsOfProdRule][END_OF_STRING] != "" ){
+				perror ( "The grammar is ambigous\n");
+				exit(1);
+			}
+			else
+				table[lhsOfProdRule][END_OF_STRING] = rhsString;
+		}
+		*/
 	}
 	return table;
+}
+void printTableToFile ( map < string, map < string, string > > table, char* outputFileName ){
+	ofstream fpOut;
+	fpOut.open( outputFileName );
+	if ( !fpOut.is_open() ){
+		perror("Output file could not be opened\n");
+		exit (1);
+        }
+	for ( map < string, map < string, string > >::iterator itOut = table.begin(); itOut != table.end(); ++itOut ){
+		fpOut << itOut->first << " : ";
+		for ( map < string,string >::iterator itIn = itOut->second.begin(); itIn != itOut->second.end(); ++itIn ){
+			fpOut << itIn->first <<"=";
+			fpOut << itIn->second<<", ";
+		}
+		fpOut << "\n";
+	}
 }
 int main( int argc, char *argv[] ){
 	if ( argc < 5 ) {
@@ -190,10 +265,13 @@ int main( int argc, char *argv[] ){
 	/*
 	 * Just testing code below, printing and stuff. Should be commented later on.
 	 */
-	/*
+
 	map < string, list < string > > firstSet = getFirstSet ( argv[2] );
 	map < string, list < string > > followSet = getFollowSet ( argv[3] );
-	map < string, map < string, string > > table = constructTable ( argv[1] );	
+	map < string, map < string, string > > table = constructTable ( argv[1], firstSet, followSet );
+	cout<<"Table constructed successfully\n";
+	printTableToFile ( table, argv[4] );
+	/*
 	for ( map < string, list <string> >::iterator itMap = firstSet.begin(); itMap != firstSet.end(); ++itMap ){
 		cout << itMap->first << " => \n";
 		for ( list < string >::iterator itList = firstSet[itMap->first].begin(); itList != firstSet[itMap->first].end(); ++itList )
