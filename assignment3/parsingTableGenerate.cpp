@@ -146,7 +146,7 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName, m
 		for ( list < string >::iterator itTerms = termList.begin(); itTerms != termList.end(); ++itTerms ){
 			table[*itNonTerms][*itTerms] = "";
 		}
-		table[*itNonTerms][ END_OF_STRING ] = "";
+		//table[*itNonTerms][ END_OF_STRING ] = "";
 	}
 	// Now read production rule A->alpha, and then for each alpha, check if in first or follow of RHS
 	ifstream fpProdRule;
@@ -213,6 +213,7 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName, m
 								table[lhsOfProdRule][*itTerm] = rhsString;
 						}
 					// checking $ for follow set
+					/*
 					if ( isInSet ( END_OF_STRING, lhsOfProdRule, followSet ) ){
 						if ( table[lhsOfProdRule][END_OF_STRING] != "" ){
 							perror ( "The grammar is NOT LL(1)\n" );
@@ -221,6 +222,7 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName, m
 						else
 							table[lhsOfProdRule][END_OF_STRING] = rhsString;
 					}
+					*/
 				}
 			}
 			else
