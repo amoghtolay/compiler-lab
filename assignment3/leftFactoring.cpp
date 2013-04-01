@@ -24,13 +24,14 @@ using namespace std;
 /*
  * Prototype declarations
  */
-
+int uniqueID = 0;
 bool isInSet ( string tokenName, string setToken, map < string, list <string> > setName );
 list < string > getTermList ( char* prodRuleFileName );
 list < string > getNonTermList ( char* prodRuleFileName );
 // Read production rules from file, and then factor it and output the final factored grammar
 map < string, vector < vector < string > > > factor ( char* prodRuleFileName );
 void printToFile ( char* outputFileName, map < string, vector < string > > factoredGrammar );
+string getNewNT ();
 /*
  * Function to read first set from the file and store in RAM
  */
@@ -44,6 +45,13 @@ bool isInSet ( string tokenName, string setToken, map < string, list <string> > 
 		}
 	}
 	return found;
+}
+string getNewNT (){
+	string newNT;
+	// write code to generate new nonTerminal
+	newNT = "T" + static_cast<ostringstream*>( &(ostringstream() << uniqueID) )->str();
+	uniqueID++;
+	return newNT;
 }
 list < string > getNonTermList ( char* prodRuleFileName ){
 	list < string > nonTermList;
@@ -119,9 +127,66 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
 		}
 	}
 	// The complete original grammar is in the memory now, called originalGrammar
-	return originalGrammar;
+	/*
+	 * Now start left factoring it
+	 */
+	/* THINGS TO DO:
+	 * 1. Repeat procedure multiple times for A->BD
+	 					A->CD, A->BCD, A->BCE
+	   2. Eliminate duplicate entries from grammar
+	 */
+	map < string, vector < vector < string > > > newGrammar;
+	for ( map < string, vector < vector < string > > >::iterator itMap = originalGrammar.begin(); itMap != originalGrammar.end(); ++itMap )
+		for ( vector < vector < string > >::iterator itVec1 = (itMap->second).begin(); itVec1 != (itMap->second).end(); ++itVec1 )
+			for ( vector < vector < string > >::iterator itVec2 = itVec1+1; itVec2 != (itMap->second).end(); ++itVec2 ){
+				unsigned int i;
+				vector < string > tempVector;
+				vector < string > tempRemaining1;
+				vector < string > tempRemaining2;
+				for ( i = 0; i < min ( (*itVec1).size(), (*itVec2).size() ); ++i ){
+					if ( (*itVec1)[i] == (*itVec2)[i] ){
+						tempVector.push_back ( (*itVec1)[i] );
+					}
+					else{
+						break;
+						//tempRemaining1.push_back ( (*itVec1)[i] );
+						//tempRemaining2.push_back ( (*itVec2)[i] );
+					}
+				}
+				// if till end common, then add epsilon rule to it now
+				if ( i == (*itVec1).size() )
+					tempRemaining1.push_back ( EPSILON );
+				if ( i == (*itVec2).size() )
+					tempRemaining2.push_back ( EPSILON );
+				for ( unsigned i1 = i; i1 < (*itVec1).size(); i1++ )
+					tempRemaining1.push_back ( (*itVec1)[i1] );
+				for ( unsigned i2 = i; i2 < (*itVec2).size (); i2++ )
+					tempRemaining2.push_back ( (*itVec2)[i2] );
+				if ( tempVector.size() > 0 ){
+					vector < vector < string > > constructNewVector1;
+					vector < vector < string > > constructNewVector2;
+					string newNT = getNewNT ();
+					tempVector.push_back ( newNT );
+					constructNewVector1.push_back ( tempVector );
+					newGrammar[itMap->first] = ( constructNewVector1 );
+					constructNewVector2.push_back ( tempRemaining1 );
+					constructNewVector2.push_back ( tempRemaining2 );
+					newGrammar[newNT] = ( constructNewVector2 );
+				}
+				else{
+				// write code for this
+					vector < vector < string > > constructNewVector1;
+					vector < vector < string > > constructNewVector2;
+					constructNewVector1.push_back ( tempRemaining1 );
+					constructNewVector2.push_back ( tempRemaining2 );
+					newGrammar[itMap->first].push_back( tempRemaining1 );
+					newGrammar[itMap->first].push_back( tempRemaining2 );
+				}
+
+			}
+	return newGrammar;
 }
-void printToFile ( char* outputFileName, map < string, vector < vector < string > > > grammar ){
+void printToFile ( char* outputFileName, map < string, vector < vector < string > > > grammar, list < string > nonTermList, list < string > termList ){
 	ofstream fpOut;
 	fpOut.open( outputFileName );
 	if ( !fpOut.is_open() ){
@@ -130,7 +195,13 @@ void printToFile ( char* outputFileName, map < string, vector < vector < string 
         }
 	/*
 	 * IMPORTANT: ADD TERMINALS AND NON TERMINALS LINE
-	
+	 */
+	for ( list < string >::iterator it = termList.begin(); it != termList.end(); ++it )
+		fpOut << *it << " ";
+	fpOut << "\n";
+	for ( list < string >::iterator it = nonTermList.begin(); it != nonTermList.end(); ++it )
+		fpOut << *it << " ";
+	fpOut << "\n";
 	for ( map < string, vector < vector < string > > >::iterator itMap = grammar.begin(); itMap != grammar.end(); ++itMap ){
 		for ( vector < vector < string > >::iterator itVec1 = itMap->second.begin(); itVec1 != itMap->second.end(); ++itVec1 ){
 			fpOut << itMap->first << "--> ";
@@ -155,6 +226,6 @@ int main( int argc, char *argv[] ){
 	list < string > termList = getTermList ( argv[1] );
 	list < string > nonTermList = getNonTermList ( argv[1] );
 	map < string, vector < vector < string > > > factoredGrammar = factor ( argv[1] );
-	printToFile ( argv[2], factoredGrammar );
+	printToFile ( argv[2], factoredGrammar, nonTermList, termList );
 	return ( EXIT_SUCCESS );
 }
