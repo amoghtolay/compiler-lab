@@ -1,0 +1,5 @@
+,,,,T E',T E',
+,,,,F T',F T',
++ T E', - T E',,,,,
+epsilon,epsilon,* F T', / F T',,,
+,,,,num,id,

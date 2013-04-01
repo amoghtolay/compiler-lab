@@ -27,7 +27,7 @@ using namespace std;
 
 map < string,list < string > > getFirstSet ( char* firstFileName );
 map < string, list < string > > getFollowSet ( char* followFileName );
-void printTableToFile ( map < string, map < string, string > > table, char* outputFileName );
+void printTableToFile ( map < string, map < string, string > > table, char* outputFileName, list < string > termList, list < string > nonTermList );
 bool isInSet ( string tokenName, string setToken, map < string, list <string> > setName );
 map < string, map <string, string> > constructTable ( char* prodRuleFileName, map < string, list < string > > firstSet, map < string, list < string > > followSet );
 list < string > getTermList ( char* prodRuleFileName );
@@ -240,21 +240,18 @@ map < string, map < string,string > > constructTable ( char* prodRuleFileName, m
 	}
 	return table;
 }
-void printTableToFile ( map < string, map < string, string > > table, char* outputFileName ){
+void printTableToFile ( map < string, map < string, string > > table, char* outputFileName, list < string > termList, list < string > nonTermList ){
 	ofstream fpOut;
 	fpOut.open( outputFileName );
 	if ( !fpOut.is_open() ){
 		perror("Output file could not be opened\n");
 		exit (1);
         }
-	for ( map < string, map < string, string > >::iterator itOut = table.begin(); itOut != table.end(); ++itOut ){
-		fpOut << itOut->first << " : ";
-		for ( map < string,string >::iterator itIn = itOut->second.begin(); itIn != itOut->second.end(); ++itIn ){
-			fpOut << itIn->first <<"=";
-			fpOut << itIn->second<<", ";
-		}
+	for ( list < string >::iterator itNonTerm = nonTermList.begin(); itNonTerm != nonTermList.end(); ++itNonTerm ){
+		for ( list < string >::iterator itTerm = termList.begin(); itTerm != termList.end(); ++itTerm )
+			fpOut << table[*itNonTerm][*itTerm]<<",";
 		fpOut << "\n";
-	}
+		}
 }
 int main( int argc, char *argv[] ){
 	if ( argc < 5 ) {
@@ -270,7 +267,9 @@ int main( int argc, char *argv[] ){
 	map < string, list < string > > followSet = getFollowSet ( argv[3] );
 	map < string, map < string, string > > table = constructTable ( argv[1], firstSet, followSet );
 	cout<<"Table constructed successfully\n";
-	printTableToFile ( table, argv[4] );
+	list < string > termList = getTermList ( argv[1] );
+	list < string > nonTermList = getNonTermList ( argv[1] );
+	printTableToFile ( table, argv[4], termList, nonTermList );
 	/*
 	for ( map < string, list <string> >::iterator itMap = firstSet.begin(); itMap != firstSet.end(); ++itMap ){
 		cout << itMap->first << " => \n";
