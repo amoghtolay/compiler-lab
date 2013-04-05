@@ -130,64 +130,66 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
 	/*
 	 * Now start left factoring it
 	 */
-	/* THINGS TO DO:
-	 * 1. Repeat procedure multiple times for A->BD
-	 					A->CD, A->BCD, A->BCE
-	   2. Eliminate duplicate entries from grammar: This is because of the following reason:
-	   	A-->BC | BD | EF first time BC and BD is inserted, then BC and EF is inserted. SO BC duplicated
-	 */
-	map < string, vector < vector < string > > > newGrammar;
-	for ( map < string, vector < vector < string > > >::iterator itMap = originalGrammar.begin(); itMap != originalGrammar.end(); ++itMap )
-		for ( vector < vector < string > >::iterator itVec1 = (itMap->second).begin(); itVec1 != (itMap->second).end(); ++itVec1 )
-			for ( vector < vector < string > >::iterator itVec2 = itVec1+1; itVec2 != (itMap->second).end(); ++itVec2 ){
-				unsigned int i;
-				vector < string > tempVector;
-				vector < string > tempRemaining1;
-				vector < string > tempRemaining2;
-				for ( i = 0; i < min ( (*itVec1).size(), (*itVec2).size() ); ++i ){
-					if ( (*itVec1)[i] == (*itVec2)[i] ){
-						tempVector.push_back ( (*itVec1)[i] );
-					}
-					else{
-						break;
-						//tempRemaining1.push_back ( (*itVec1)[i] );
-						//tempRemaining2.push_back ( (*itVec2)[i] );
-					}
-				}
-				// if till end common, then add epsilon rule to it now
-				if ( i == (*itVec1).size() )
-					tempRemaining1.push_back ( EPSILON );
-				if ( i == (*itVec2).size() )
-					tempRemaining2.push_back ( EPSILON );
-				for ( unsigned i1 = i; i1 < (*itVec1).size(); i1++ )
-					tempRemaining1.push_back ( (*itVec1)[i1] );
-				for ( unsigned i2 = i; i2 < (*itVec2).size (); i2++ )
-					tempRemaining2.push_back ( (*itVec2)[i2] );
-				if ( tempVector.size() > 0 ){
-					cout<<"\n******** Entered if statement\n";
-					vector < vector < string > > constructNewVector1;
-					vector < vector < string > > constructNewVector2;
-					string newNT = getNewNT ();
-					tempVector.push_back ( newNT );
-					constructNewVector1.push_back ( tempVector );
-					newGrammar[itMap->first] = ( constructNewVector1 );
-					constructNewVector2.push_back ( tempRemaining1 );
-					constructNewVector2.push_back ( tempRemaining2 );
-					newGrammar[newNT] = ( constructNewVector2 );
-				}
-				else{
-				// write code for this
-					cout<<"\n********* entered else statement\n";
-					for ( unsigned int k=0; k<tempRemaining1.size(); k++ )
-						cout<<tempRemaining1[k]<<"\t";
-					cout<<"\n";
-					for ( unsigned int k=0; k<tempRemaining2.size(); k++ )
-						cout<<tempRemaining2[k]<<"\t";
+	
+    map < string, vector < vector < string > > > newGrammar;
+    /*
+     * Init variable to see if first position contains which letter, we need a map of elements
+     * this is called a location map
+     */
+    bool changesOccured = false;
+    do {
+        changesOccured = false;
+        for ( map < string, vector < vector < string > > >::iterator itMap = originalGrammar.begin(); itMap != originalGrammar.end(); ++itMap ){
+            map < string, int > loc1;
+            for ( vector < vector < string > >::iterator itVec1 = (itMap->second).begin(); itVec1 != (itMap->second).end(); ++itVec1 )
+                if ( loc1.find( (*itVec1)[0] ) != loc1.end() )
+                    loc1[ (*itVec1)[0] ] += 1;
+                else
+                    loc1[ (*itVec1)[0] ] = 1;
+            // Location map ( only first location has been initialized
+            for ( vector < vector < string > >::iterator prodRuleSingle = (itMap->second).begin(); prodRuleSingle != (itMap->second).end(); ++prodRuleSingle ){
+                string firstTerm = (*prodRuleSingle)[0];
+                if ( loc1[ firstTerm ] > 1 ){
+                    // add rule A-->(*prodRuleSingle)[0] UID to new grammar
+                    vector < string > tempPushVec;
+                    tempPushVec.push_back ( firstTerm );
+                    string newNT=getNewNT();
+                    tempPushVec.push_back ( newNT );
+                    newGrammar[ itMap->first ].push_back ( tempPushVec );
+                    changesOccured = true;
+    
+                    for ( vector < vector < string > >::iterator subRule = (itMap->second).begin(); subRule != (itMap->second).end(); ++subRule ){
+                        if ( (*subRule)[0] == firstTerm ){
+                            if ( (*subRule).size() == 1 ){
+                                // Add UID-->epsilon rule to new grammar
+                                vector < string > tempPushEpsilon;
+                                tempPushEpsilon.push_back ( EPSILON );
+                                newGrammar[newNT].push_back ( tempPushEpsilon );
+                            }
+                            else {
+                                // Add UID-->vector[1:] to new grammar
+                                vector < string > tempPushVec;
+                                tempPushVec = (*subRule);
+                                tempPushVec.erase( tempPushVec.begin() );
+                                newGrammar[newNT].push_back ( tempPushVec );                                                
+                            }
+                        }
+                    }
+                    loc1[ firstTerm ] = 0;
+                }
+                if ( loc1[ firstTerm ] == 1 ){
+                    // copy the rule as it is to new grammar
+                    newGrammar[ itMap->first ].push_back ( *prodRuleSingle );
+                }
+                if ( loc1[ firstTerm ] == 0 )
+                    continue;
+            }
+        }
+        originalGrammar = newGrammar;
+    } while ( changesOccured );
+    // Finished with one iteration, do this repeatedly on newGramar till this gets solved
+    // So essentially oldGrammar = newGrammar
 
-					newGrammar[itMap->first].push_back( tempRemaining2 );
-					newGrammar[itMap->first].push_back( tempRemaining1 );
-				}
-			}
 	return newGrammar;
 }
 void printToFile ( char* outputFileName, map < string, vector < vector < string > > > grammar, list < string > nonTermList, list < string > termList ){
@@ -202,13 +204,17 @@ void printToFile ( char* outputFileName, map < string, vector < vector < string 
 	 */
 	for ( list < string >::iterator it = termList.begin(); it != termList.end(); ++it )
 		fpOut << *it << " ";
-	fpOut << "\n";
-	for ( list < string >::iterator it = nonTermList.begin(); it != nonTermList.end(); ++it )
+    fpOut << "\n";
+	
+    for ( list < string >::iterator it = nonTermList.begin(); it != nonTermList.end(); ++it )
 		fpOut << *it << " ";
+	for ( int i=0; i<uniqueID; i++ )
+        fpOut << "T" + static_cast<ostringstream*>( &(ostringstream() << i) )->str() << " ";
 	fpOut << "\n";
-	for ( map < string, vector < vector < string > > >::iterator itMap = grammar.begin(); itMap != grammar.end(); ++itMap ){
+	
+    for ( map < string, vector < vector < string > > >::iterator itMap = grammar.begin(); itMap != grammar.end(); ++itMap ){
 		for ( vector < vector < string > >::iterator itVec1 = itMap->second.begin(); itVec1 != itMap->second.end(); ++itVec1 ){
-			fpOut << itMap->first << "--> ";
+			fpOut << itMap->first << "-->";
 			for ( vector < string >::iterator itVec2 = (*itVec1).begin(); itVec2 != (*itVec1).end(); ++itVec2 ){
 				fpOut << *itVec2 << " ";
 			}
