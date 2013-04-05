@@ -133,7 +133,8 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
 	/* THINGS TO DO:
 	 * 1. Repeat procedure multiple times for A->BD
 	 					A->CD, A->BCD, A->BCE
-	   2. Eliminate duplicate entries from grammar
+	   2. Eliminate duplicate entries from grammar: This is because of the following reason:
+	   	A-->BC | BD | EF first time BC and BD is inserted, then BC and EF is inserted. SO BC duplicated
 	 */
 	map < string, vector < vector < string > > > newGrammar;
 	for ( map < string, vector < vector < string > > >::iterator itMap = originalGrammar.begin(); itMap != originalGrammar.end(); ++itMap )
@@ -163,6 +164,7 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
 				for ( unsigned i2 = i; i2 < (*itVec2).size (); i2++ )
 					tempRemaining2.push_back ( (*itVec2)[i2] );
 				if ( tempVector.size() > 0 ){
+					cout<<"\n******** Entered if statement\n";
 					vector < vector < string > > constructNewVector1;
 					vector < vector < string > > constructNewVector2;
 					string newNT = getNewNT ();
@@ -175,14 +177,16 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
 				}
 				else{
 				// write code for this
-					vector < vector < string > > constructNewVector1;
-					vector < vector < string > > constructNewVector2;
-					constructNewVector1.push_back ( tempRemaining1 );
-					constructNewVector2.push_back ( tempRemaining2 );
-					newGrammar[itMap->first].push_back( tempRemaining1 );
-					newGrammar[itMap->first].push_back( tempRemaining2 );
-				}
+					cout<<"\n********* entered else statement\n";
+					for ( unsigned int k=0; k<tempRemaining1.size(); k++ )
+						cout<<tempRemaining1[k]<<"\t";
+					cout<<"\n";
+					for ( unsigned int k=0; k<tempRemaining2.size(); k++ )
+						cout<<tempRemaining2[k]<<"\t";
 
+					newGrammar[itMap->first].push_back( tempRemaining2 );
+					newGrammar[itMap->first].push_back( tempRemaining1 );
+				}
 			}
 	return newGrammar;
 }
