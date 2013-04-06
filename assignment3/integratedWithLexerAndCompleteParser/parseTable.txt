@@ -1,0 +1,5 @@
+,,t e1 ,,
+,+ t e1 ,,epsilon ,
+,,id ,,
+,,id t1 ,,
+* f t1 ,epsilon ,,epsilon ,

@@ -1,0 +1,7 @@
+a b c d e f g $
+S W X Y Y1 Z 
+X-->Y b  
+X-->g 
+Y-->g a Y1 
+Y1-->b a Y1  
+Y1-->epsilon 

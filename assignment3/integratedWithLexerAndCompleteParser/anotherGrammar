@@ -1,0 +1,7 @@
+id * +
+e f t
+e-->e + t
+    |t
+t-->t * f
+    |f
+f-->id

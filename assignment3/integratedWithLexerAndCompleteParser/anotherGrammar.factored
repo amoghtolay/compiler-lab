@@ -1,0 +1,9 @@
+* + id $ 
+e e1 f t t1 
+e-->t e1 
+e1-->+ t e1 
+e1-->epsilon 
+f-->id 
+t-->id t1 
+t1-->* f t1 
+t1-->epsilon 

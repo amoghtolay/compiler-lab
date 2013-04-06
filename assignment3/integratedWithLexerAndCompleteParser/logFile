@@ -1,0 +1,104 @@
+now stack top is e
+next token is id
+------------------------------------
+popping nonterm e
+pushing e1
+pushing t
+now stack top is t
+next token is id
+------------------------------------
+popping nonterm t
+pushing t1
+pushing id
+now stack top is id
+next token is id
+------------------------------------
+popping term id
+now stack top is t1
+next token is *
+------------------------------------
+popping nonterm t1
+pushing t1
+pushing f
+pushing *
+now stack top is *
+next token is *
+------------------------------------
+popping term *
+now stack top is f
+next token is id
+------------------------------------
+popping nonterm f
+pushing id
+now stack top is id
+next token is id
+------------------------------------
+popping term id
+now stack top is t1
+next token is +
+------------------------------------
+popping nonterm t1
+pushing epsilon
+now stack top is epsilon
+next token is +
+------------------------------------
+popping epsilon
+now stack top is e1
+next token is +
+------------------------------------
+popping nonterm e1
+pushing e1
+pushing t
+pushing +
+now stack top is +
+next token is +
+------------------------------------
+popping term +
+now stack top is t
+next token is id
+------------------------------------
+popping nonterm t
+pushing t1
+pushing id
+now stack top is id
+next token is id
+------------------------------------
+popping term id
+now stack top is t1
+next token is *
+------------------------------------
+popping nonterm t1
+pushing t1
+pushing f
+pushing *
+now stack top is *
+next token is *
+------------------------------------
+popping term *
+now stack top is f
+next token is id
+------------------------------------
+popping nonterm f
+pushing id
+now stack top is id
+next token is id
+------------------------------------
+popping term id
+now stack top is t1
+next token is $
+------------------------------------
+popping nonterm t1
+pushing epsilon
+now stack top is epsilon
+next token is $
+------------------------------------
+popping epsilon
+now stack top is e1
+next token is $
+------------------------------------
+popping nonterm e1
+pushing epsilon
+now stack top is epsilon
+next token is $
+------------------------------------
+popping epsilon

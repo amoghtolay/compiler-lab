@@ -1,0 +1,25 @@
+int main ( )
+{
+	int var1 ;
+    var1 = 0 ;
+	int var2 ;
+    int var3 ;
+    var3 = 3 ;
+    var2 = 2 ;
+	char myChar ;
+    char myChar2 ;
+	myChar = myChar2 ;
+	var1 = var2 + 3 ;
+	while
+        var1 
+        == var2 ) {
+        while ( var1 == var3 ) 
+            continue ;
+        if ( var3 == var1 ) {
+            break ;
+        }
+        else
+            continue ;
+    } ;
+	break ;
+} ;

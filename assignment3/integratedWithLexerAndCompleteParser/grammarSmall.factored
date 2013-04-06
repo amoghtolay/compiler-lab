@@ -1,0 +1,15 @@
+a b c d e f $ 
+S W X Y Y1 Z Z1 T0 T1 
+S-->Y Z W 
+T0-->e T1 
+T0-->f W 
+T1-->W 
+T1-->epsilon 
+W-->d T0 
+X-->Y b 
+Y-->Y1 
+Y1-->b a Y1 
+Y1-->epsilon 
+Z-->Z1 
+Z1-->c Z1 
+Z1-->epsilon 

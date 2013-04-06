@@ -1,0 +1,21 @@
+u v x z $
+S A A' A'' A''1 B B1 C C' C'1 D D1 
+A-->A' x  
+A-->epsilon 
+A'-->A'' y 
+A''-->z A''1 
+A''1-->y x z A''1  
+A''1-->epsilon 
+B-->B1 
+B1-->w B1  
+B1-->epsilon 
+C-->C' u  
+C-->v 
+C'-->v v C'1 
+C'1-->u v C'1  
+C'1-->epsilon 
+D-->D1 
+D1-->C' u D1  
+D1-->v D1 
+S-->w B1 D  
+S-->D 

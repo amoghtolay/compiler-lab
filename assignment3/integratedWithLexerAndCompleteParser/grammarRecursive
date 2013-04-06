@@ -1,0 +1,14 @@
+x u v z
+S A B C D A' A'' C'
+S-->A B D
+A-->A' x
+A'-->A'' y
+A''-->A z
+A-->epsilon
+B-->B w
+    |epsilon
+C-->C' u
+C'-->C v
+C-->v
+D-->D A C
+D-->epsilon
