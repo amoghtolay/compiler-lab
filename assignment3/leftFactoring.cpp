@@ -186,11 +186,12 @@ map < string, vector < vector < string > > > factor ( char* prodRuleFileName ){
             }
         }
         originalGrammar = newGrammar;
+        newGrammar.clear();
     } while ( changesOccured );
     // Finished with one iteration, do this repeatedly on newGramar till this gets solved
     // So essentially oldGrammar = newGrammar
 
-	return newGrammar;
+	return originalGrammar;
 }
 void printToFile ( char* outputFileName, map < string, vector < vector < string > > > grammar, list < string > nonTermList, list < string > termList ){
 	ofstream fpOut;
@@ -237,5 +238,6 @@ int main( int argc, char *argv[] ){
 	list < string > nonTermList = getNonTermList ( argv[1] );
 	map < string, vector < vector < string > > > factoredGrammar = factor ( argv[1] );
 	printToFile ( argv[2], factoredGrammar, nonTermList, termList );
+    cout<<"Left factoring of original grammar completed.\n";
 	return ( EXIT_SUCCESS );
 }
